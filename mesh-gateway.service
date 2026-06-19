@@ -1,0 +1,17 @@
+[Unit]
+Description=MeshCore to OpenTAKServer Gateway Service
+After=network.target
+
+[Service]
+Type=simple
+User=meshcore
+WorkingDirectory=/home/meshcore/meshcore_env
+# Point directly to the virtual environment's python binary:
+ExecStart=/home/meshcore/meshcore_env/bin/python3 meshcore_advert_ots_gateway_v1.0.py
+Restart=on-failure
+RestartSec=5
+# Optional: Aggressive logging buffer flush
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
