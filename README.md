@@ -25,6 +25,9 @@ To deploy and operate the gateway ecosystem fully, the following hardware assets
 * **Wio Tracker L1 Pro:** Field terminal transmitting telemetry updates through the LoRa mesh network.
 * **SenseCAP Card Tracker T1000-E:** Portable GPS tracker utilized for field deployment within compatible LoRa infrastructure boundaries.
 
+
+![System Component & Network Topology](http://googleusercontent.com/image_generation_content/0)
+
 ---
 
 ### 4. Raspberry Pi Initial Network Configuration
@@ -95,6 +98,8 @@ The gateway core architecture (`meshcore_advert_ots_gateway_v1.0.py`) operates a
 
 
 * **XML Generation & Timing Validation:** Extracted node parameters are packed into CoT templates. Maintainers must ensure all timestamps are generated using strict absolute Zulu (UTC/GMT) time formats. If the `stale` lifespan attribute is too short, upstream ingestion queues will flag the packets as expired and drop them from the map interface.
+
+![Sequential Data Flow Diagram](http://googleusercontent.com/image_generation_content/1)
 
 ---
 
