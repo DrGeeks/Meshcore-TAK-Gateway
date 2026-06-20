@@ -26,7 +26,6 @@ To deploy and operate the gateway ecosystem fully, the following hardware assets
 * **SenseCAP Card Tracker T1000-E:** Portable GPS tracker utilized for field deployment within compatible LoRa infrastructure boundaries.
 
 
-```markdown
 ```mermaid
 graph TD
     %% Styling Classes
@@ -147,7 +146,6 @@ The gateway core architecture (`meshcore_advert_ots_gateway_v1.0.py`) operates a
 
 * **XML Generation & Timing Validation:** Extracted node parameters are packed into CoT templates. Maintainers must ensure all timestamps are generated using strict absolute Zulu (UTC/GMT) time formats. If the `stale` lifespan attribute is too short, upstream ingestion queues will flag the packets as expired and drop them from the map interface.
 
-```markdown
 ```mermaid
 sequenceDiagram
     autonumber
