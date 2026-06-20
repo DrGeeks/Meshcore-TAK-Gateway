@@ -26,7 +26,55 @@ To deploy and operate the gateway ecosystem fully, the following hardware assets
 * **SenseCAP Card Tracker T1000-E:** Portable GPS tracker utilized for field deployment within compatible LoRa infrastructure boundaries.
 
 
-![System Component & Network Topology](http://googleusercontent.com/image_generation_content/0)
+```markdown
+```mermaid
+graph TD
+    %% Styling Classes
+    classDef field fill:#ffebeb,stroke:#ff3333,stroke-width:2px;
+    classDef base fill:#f0f5ff,stroke:#1d3557,stroke-width:2px;
+    classDef soft fill:#e8fdf5,stroke:#2a9d8f,stroke-width:2px;
+    classDef server fill:#fff9e6,stroke:#ffb703,stroke-width:2px;
+
+    subgraph FIELD_LEVEL["FIELD LEVEL (MESH)"]
+        Trackers["Multi-Tracker Fleet<br/>• Wio Tracker L1 Pro<br/>• SenseCAP T1000-E"]
+        Repeater["Solar Powered Repeater<br/>(SenseCAP Solar Node P1-Pro)"]
+    end
+    class Trackers,Repeater field;
+
+    subgraph GATEWAY_LAYER["GATEWAY BASE STATION LAYER"]
+        Companion["MeshCore Companion Radio Device"]
+        subgraph PI_HARDWARE["RASPBERRY PI BASE STATION HARDWARE"]
+            subgraph SOFTWARE_STACK["Gateway Software Stack (Python)"]
+                MeshCLI["meshcli Wrapper<br/>• floodadv utility<br/>• reset_path (rp)"]
+                PollingEngine["Outbound Polling Engine<br/>• req_telemetry<br/>• Telemetry Parser"]
+                CoTGen["CoT XML Generator Core"]
+            end
+            OverlayFS["Local RAM Allocation:<br/>Ephemeral Workspace (OverlayFS)"]
+        end
+    end
+    class Companion,MeshCLI,PollingEngine,CoTGen,OverlayFS base;
+    class SOFTWARE_STACK soft;
+
+    subgraph SERVER_LAYER["CLOUD / SERVER LAYER (TAK)"]
+        subgraph OPEN_TAK["ARGUSTAK SERVER (OpenTAKServer Deployment)"]
+            EudHandler["EudHandlerSSL<br/>(Ingestion Lane)"]
+            RabbitMQ["Message Queue<br/>(RabbitMQ Broker)"]
+            Postgres["Database Store<br/>(PostgreSQL Core)"]
+            WebUI["Presentation UI<br/>(Live TAK Map)"]
+        end
+    end
+    class EudHandler,RabbitMQ,Postgres,WebUI server;
+
+    Trackers <-->|Unicast / Mesh RF| Repeater
+    Trackers <-->|Direct Peer-to-Peer RF| Companion
+    Repeater <-->|Flood Routing| Companion
+    Companion <-->|Serial / USB Interface<br/>/dev/ttyACM0| MeshCLI
+    Companion <-->|Serial / USB Interface| PollingEngine
+    MeshCLI --> CoTGen
+    PollingEngine --> CoTGen
+    CoTGen -->|Ethernet RJ-45 @ 192.168.1.238<br/>mTLS Encrypted TCP Stream via Port 8089| EudHandler
+    EudHandler --> RabbitMQ
+    RabbitMQ --> Postgres
 
 ---
 
@@ -99,7 +147,43 @@ The gateway core architecture (`meshcore_advert_ots_gateway_v1.0.py`) operates a
 
 * **XML Generation & Timing Validation:** Extracted node parameters are packed into CoT templates. Maintainers must ensure all timestamps are generated using strict absolute Zulu (UTC/GMT) time formats. If the `stale` lifespan attribute is too short, upstream ingestion queues will flag the packets as expired and drop them from the map interface.
 
-![Sequential Data Flow Diagram](http://googleusercontent.com/image_generation_content/1)
+```markdown
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Trackers as Trackers (Field Nodes)
+    participant Repeater as Solar Repeater (P1-Pro)
+    participant Radio as MeshCore Companion (Radio HW)
+    participant Pi as Raspberry Pi Gateway (Python Script)
+    participant Server as Argustak Server (argustak.com:8089)
+
+    note over Pi: Every 60 Seconds Loop Resumes
+    Pi->>Radio: Send floodadv (Flood Advertisement)
+    Radio-->>Repeater: Broadcast Flood
+    Radio-->>Trackers: Broadcast Flood
+    
+    Pi->>Radio: Clear stale path (meshcli reset_path)
+    Pi->>Radio: Polling Request (req_telemetry ID)
+    
+    alt Direct path fails
+        Radio->>Repeater: Unicast via Repeater
+        Repeater->>Trackers: Forward Request
+        Trackers->>Repeater: Send GPS Location (LPP)
+        Repeater->>Radio: Route Data Back
+    else Direct path works
+        Radio->>Trackers: Direct Point-to-Point Request
+        Trackers->>Radio: Send GPS Location (LPP)
+    end
+
+    Radio->>Pi: Stream Raw Byte String over USB
+    
+    note over Pi: Validation Checks:<br/>1. Filter out non-JSON<br/>2. Decode LPP array<br/>3. Pull strict UTC time<br/>4. Format CoT XML<br/>5. Set 1-Hr Stale Window
+    
+    Pi->>Server: Establish mTLS (Load client.crt / client.key)
+    Server->>Pi: TLS 1.3 Handshake Completed
+    Pi->>Server: Stream CoT XML Payload (Ends with '\n', no XML headers)
+    
+    note over Server: Server Backend Core:<br/>1. Route to RabbitMQ<br/>2. cot_parser DB Write<br/>3. Render Target on Live Map
 
 ---
 
