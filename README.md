@@ -164,16 +164,11 @@ sequenceDiagram
     
     Pi->>Radio: Clear stale path (meshcli reset_path)
     Pi->>Radio: Polling Request (req_telemetry ID)
-    
-    alt Direct path fails
-        Radio->>Repeater: Unicast via Repeater
-        Repeater->>Trackers: Forward Request
-        Trackers->>Repeater: Send GPS Location (LPP)
-        Repeater->>Radio: Route Data Back
-    else Direct path works
-        Radio->>Trackers: Direct Point-to-Point Request
-        Trackers->>Radio: Send GPS Location (LPP)
-    end
+
+    Radio->>Repeater: Unicast via Repeater
+    Repeater->>Trackers: Forward Request
+    Trackers->>Repeater: Send GPS Location (LPP)
+    Repeater->>Radio: Route Data Back
 
     Radio->>Pi: Stream Raw Byte String over USB
     
