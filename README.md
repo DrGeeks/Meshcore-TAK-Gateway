@@ -25,7 +25,6 @@ To deploy and operate the gateway ecosystem fully, the following hardware assets
 * **Wio Tracker L1 Pro:** Field terminal transmitting telemetry updates through the LoRa mesh network.
 * **SenseCAP Card Tracker T1000-E:** Portable GPS tracker utilized for field deployment within compatible LoRa infrastructure boundaries.
 
-
 ```mermaid
 graph TD
     %% Styling Classes
@@ -74,6 +73,9 @@ graph TD
     CoTGen -->|Ethernet RJ-45 @ 192.168.1.238<br/>mTLS Encrypted TCP Stream via Port 8089| EudHandler
     EudHandler --> RabbitMQ
     RabbitMQ --> Postgres
+    Postgres --> WebUI
+
+```
 
 ---
 
@@ -182,6 +184,9 @@ sequenceDiagram
     Pi->>Server: Stream CoT XML Payload (Ends with '\n', no XML headers)
     
     note over Server: Server Backend Core:<br/>1. Route to RabbitMQ<br/>2. cot_parser DB Write<br/>3. Render Target on Live Map
+
+
+```
 
 ---
 
