@@ -113,14 +113,17 @@ Modern operating systems utilizing OpenSSL 3.0 require explicit flags to extract
 
 ```bash
 # Extract the client private key using the legacy engine
-openssl pkcs12 -in truststore.p12 -nocerts -nodes -out client.key -passin pass:atakatak -legacy
+openssl pkcs12 -in client.p12 -nocerts -nodes -out client.key -passin pass:****** -legacy
 
 # Extract the client public certificate
-openssl pkcs12 -in truststore.p12 -clcerts -nokeys -out client.crt -passin pass:atakatak -legacy
+openssl pkcs12 -in client.p12 -clcerts -nokeys -out client.crt -passin pass:****** -legacy
+
+# Convert the truststore certificate
+openssl pkcs12 -in truststore.p12 -nokeys -out truststore.pem -legacy
 
 ```
 
-Verify that your completed destination files (`truststore.pem`, `client.crt`, and `client.key`) are placed directly within your gateway runtime folder and begin cleanly with their matching `-----BEGIN ...` headers.
+Verify that your completed destination files (`truststore.pem`, `client.crt`, and `client.key`) are placed directly within your gateway runtime folders.
 
 ---
 
